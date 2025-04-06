@@ -1,123 +1,21 @@
+
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <title>学分查询与更新系统</title>
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
-  <style>.mt-20 { margin-top: 20px; }</style>
+    <meta charset="UTF-8">
+    <title>学生学分系统</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container mt-4">
-    <h1>学分查询与更新系统</h1>
-    <div class="form-inline mt-20">
-      <input type="text" id="searchInput" class="form-control mr-2" placeholder="请输入姓名查询">
-      <button class="btn btn-primary" onclick="searchStudent()">查询</button>
-      <button class="btn btn-secondary ml-2" onclick="resetSearch()">重置</button>
-    </div>
-    <h4 class="mt-20">增加学分（各项目增量）</h4>
-    <div class="form-row">
-      <div class="form-group col-md-2">
-        <label>思想成长</label>
-        <input type="number" step="0.1" id="increment_思想成长" class="form-control" value="0">
-      </div>
-<div class="form-group col-md-2">
-        <label>志愿公益</label>
-        <input type="number" step="0.1" id="increment_志愿公益" class="form-control" value="0">
-      </div>
-<div class="form-group col-md-2">
-        <label>实践实习</label>
-        <input type="number" step="0.1" id="increment_实践实习" class="form-control" value="0">
-      </div>
-<div class="form-group col-md-2">
-        <label>文体活动</label>
-        <input type="number" step="0.1" id="increment_文体活动" class="form-control" value="0">
-      </div>
-<div class="form-group col-md-2">
-        <label>创新创业</label>
-        <input type="number" step="0.1" id="increment_创新创业" class="form-control" value="0">
-      </div>
-<div class="form-group col-md-2">
-        <label>美育活动</label>
-        <input type="number" step="0.1" id="increment_美育活动" class="form-control" value="0">
-      </div>
-    </div>
-    <button class="btn btn-success" onclick="updateCredits()">更新选中学生学分</button>
-    <button class="btn btn-warning ml-2" onclick="exportToExcel()">导出 Excel</button>
-    <table class="table table-bordered table-hover mt-20" id="studentsTable">
-      <thead>
-        <tr>
-          <th>选择</th><th>姓名</th><th>思想成长</th><th>志愿公益</th><th>实践实习</th>
-          <th>文体活动</th><th>创新创业</th><th>美育活动</th><th>学分总和</th>
-        </tr>
-      </thead>
-      <tbody id="tableBody"></tbody>
+    <h1>学生学分查询系统</h1>
+    <input type="file" id="fileInput" />
+    <input type="text" id="searchInput" placeholder="搜索姓名..." />
+    <button onclick="exportExcel()">导出Excel</button>
+    <table id="studentTable">
+        <thead><tr><th>姓名</th><th>加分</th><th>减分</th><th>总分</th><th>操作</th></tr></thead>
+        <tbody></tbody>
     </table>
-  </div>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <script>
-    let students = [{'姓名': '吴浩琪', '思想成长': 2.0, '志愿公益': 0.4, '实践实习': 0.5, '文体活动': 0.8, '创新创业': 0.1, '美育活动': 0.6}, {'姓名': '杜维依', '思想成长': 1.9, '志愿公益': 0.4, '实践实习': 0.7, '文体活动': 0.6, '创新创业': 0.1, '美育活动': 0.5}, {'姓名': '宫鹏辉', '思想成长': 2.0, '志愿公益': 0.4, '实践实习': 0.3, '文体活动': 0.7, '创新创业': 0.1, '美育活动': 0.5}, {'姓名': '王祥华', '思想成长': 1.8, '志愿公益': 0.4, '实践实习': 0.4, '文体活动': 0.7, '创新创业': 0.1, '美育活动': 0.6}];
-
-    function initStudents() {
-      students.forEach(s => {
-        s["学分总和"] = s["思想成长"] + s["志愿公益"] + s["实践实习"] + s["文体活动"] + s["创新创业"] + s["美育活动"];
-      });
-      renderTable(students);
-    }
-
-    function renderTable(data) {
-      const tbody = document.getElementById("tableBody");
-      tbody.innerHTML = "";
-      data.forEach((s, i) => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td><input type="checkbox" value="${i}"></td>
-          <td>${s["姓名"]}</td>
-          <td>${s["思想成长"].toFixed(1)}</td>
-          <td>${s["志愿公益"].toFixed(1)}</td>
-          <td>${s["实践实习"].toFixed(1)}</td>
-          <td>${s["文体活动"].toFixed(1)}</td>
-          <td>${s["创新创业"].toFixed(1)}</td>
-          <td>${s["美育活动"].toFixed(1)}</td>
-          <td>${s["学分总和"].toFixed(1)}</td>`;
-        tbody.appendChild(row);
-      });
-    }
-
-    function searchStudent() {
-      const q = document.getElementById("searchInput").value.trim();
-      renderTable(q ? students.filter(s => s["姓名"].includes(q)) : students);
-    }
-
-    function resetSearch() {
-      document.getElementById("searchInput").value = "";
-      renderTable(students);
-    }
-
-    function updateCredits() {
-      const fields = ["思想成长", "志愿公益", "实践实习", "文体活动", "创新创业", "美育活动"];
-      const increments = {};
-      fields.forEach(f => {
-        increments[f] = parseFloat(document.getElementById("increment_" + f).value) || 0;
-      });
-      const checkboxes = document.querySelectorAll("#tableBody input[type=checkbox]");
-      checkboxes.forEach(cb => {
-        if (cb.checked) {
-          const idx = parseInt(cb.value);
-          fields.forEach(f => students[idx][f] += increments[f]);
-          students[idx]["学分总和"] = fields.reduce((sum, f) => sum + students[idx][f], 0);
-        }
-      });
-      searchStudent();
-    }
-
-    function exportToExcel() {
-      const ws = XLSX.utils.json_to_sheet(students);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "学生学分");
-      XLSX.writeFile(wb, "学生学分表.xlsx");
-    }
-
-    window.onload = initStudents;
-  </script>
+    <script src="xlsx.full.min.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
